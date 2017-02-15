@@ -1,0 +1,531 @@
+<?php 
+
+//Prevent the user visiting the logged in page if he is not logged in
+if(!isUserLoggedIn()) { header("Location: login.php"); die(); }
+/* prepare statement */
+if ($stmt = $mysqli->prepare("SELECT id, user_name, display_name, password, email, title, fax, bio, google, twitter, facebook, linkedin, phone, photo, Speedhatch FROM ".$db_table_prefix."users")) {
+    $stmt->execute();
+
+    /* bind variables to prepared statement */
+    $stmt->bind_result($id, $user_name, $display_name, $thepass, $email, $title, $fax, $bio, $google, $twitter, $facebook, $linkedin, $phone, $photo, $speedhatch);
+	
+	/* fetch values */
+    while ($stmt->fetch()) {
+       
+	  if ($loggedInUser->username == $user_name) {
+	   	$theinfo = array(
+			"id" => $id,
+			"email" => $email,
+			"user_name" =>$user_name,
+			"fax" => $fax, 
+			"phone" => $phone);
+		}//End if
+    }//end while
+
+    /* close statement */
+    $stmt->close();
+}
+
+/* OPTIONS */
+
+$availability = array(
+	0 => "This address is available",
+	1 => "Apartment will be ready by",
+	2 => "Move in",
+	3 => "Available for rent by",
+	4 => "Move in by",
+	5 => "Call it home by",
+	6 => "");
+shuffle($availability);
+$avdice = array_rand($availability, 1);
+// $availability[$avdice];
+
+$predate = array(
+	0 => "This address is available",
+	1 => "Apartment will be ready by",
+	2 => "Move in",
+	3 => "Available for rent by",
+	4 => "Call it home by",
+	5 => "",
+	);
+shuffle($predate);
+$predice = array_rand($predate, 1);
+// $postdate[$postdice];
+
+$postdate = array(
+	0 => "I look forward to talking with you!",
+	1 => "We are eager to hear from you!",
+	2 => "Call today!",
+	3 => "Enquire today!",
+	4 => "We look forward to hearing from you!",
+	5 => "",
+);
+shuffle($postdate);
+$postdice = array_rand($postdate, 1);
+// $postdate[$postdice];
+
+$closing = array(
+	0 => "Schedule your showing today!",
+	1 => "See this property!",
+	2 => "Visit this property!",
+	3 => "Now available for viewing",
+	4 => "Call today to schedule a showing!",
+	5 => "",
+);
+shuffle($closing);
+$cldice = array_rand($closing, 1);
+// $postdate[$postdice];
+
+
+$footer = array(
+	0 => "Luxe Large Logo 1",
+	1 => "Luxe Large Logo 2",
+	2 => "Luxe Large Logo 3",
+	3 => "Luxe Small Logo 1",
+	4 => "Luxe Small Logo 2",
+	5 => "Luxe Small Logo 3"
+);
+shuffle($footer);
+
+
+
+
+/*Put it together*/
+echo "
+<html xmlns='http://www.w3.org/1999/xhtml'>
+<head>
+<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
+<title>Post Generator</title>
+<style>
+input[type='text'] {
+	border: 1px solid #2b2b2b;
+	display: inline-block;
+	margin: 0 auto 10px;
+	width: 80%}
+#buildingname {
+	text-align: center;
+}
+#desc2 {
+	height: 70px;}
+#description {
+	height: 250px;
+	margin: 15px auto}
+textarea {
+	border: 1px solid #2b2b2b;
+	display: block;
+	margin: 0 auto;
+	width: 80%;}
+select {
+	display: inline-block;}
+input.date {width: 50px;}
+table {text-align: center;}
+#avail-cust-box, #post-cust-box, #close-cust-box {display: none;}
+button.ok {
+	border-width: 2px;
+    float: right;
+    font-size: 10px;
+    padding: 2px;}
+textarea#thepost {
+	width: 300px;
+	float: right;
+	height: 300px}
+#step2 {
+	width: 75%;
+	display: block;
+	margin: 0 auto 100px;
+	overflow: auto}
+</style>
+
+</head>
+
+<body>
+    <div id='sample' style='border: 1px solid black; padding: 20px; display: block; width: 640px; margin: 0 auto; background:#CFC'>
+    	<form name='genpost' id='genpost' action='".$_SERVER['PHP_SELF']."' method='post'>
+		<font face='Century Gothic, Arial'><center>
+           
+			<table width='600' bgcolor='2b2b2b'>
+                <tr>
+                    <th colspan='2'><font color='4a7c99' size='3'><blockquote>
+                        <input type='text' name='buildingname' id='buildingname' value='Building Name'></p>
+                    </blockquote></font></th>
+                </tr>
+            </table>
+            
+            <table width='600' bgcolor='d1d3d4'>
+                <tr>
+                    <td><font size='3'>
+						<input type='text' value='' id='line1' name='line1'><br>
+						<textarea name='description' id='description'><ul><li>Great Kendall location</li><br><li>Dog friendly</li><br> <li>Laundry in unit</li><br><li>Heat & Hot Water included</li><br><li>Garage Parking</li><br><li>Concierge Services</li><br><li>Fitness Center</li></ul></textarea>
+						<input type='text' value='' name='line2' id='line2'>
+                    </td>
+                    <td>
+                        <blockquote><font size='2'>
+                        <p align='center'><b>
+						<select id='availability' onChange='availTxt()' name='availability'>";
+						foreach ($availability as $avphrase) {
+							$avII = "<option>".$avphrase."</option>";
+							echo $avII;
+						}
+						echo "
+						</select>
+						<div id='avail-cust-box'>
+						<input type='text' name='avail-cust' id='avail-cust' value='' /> <button class='ok' name='ok' onClick='okAvail()'>Add</button> 
+						</div>
+						
+						<input type='text' value='April 4' class='date' name='date' id='date'></b><br>
+                        <select id='postdate' onChange='postTxt()' name='postdate'>";
+						foreach ($postdate as $postphrase) {
+							$postII = "<option>".$postphrase."</option>";
+							echo $postII;
+						}
+						echo "
+						</select>
+						<div id='post-cust-box'>
+						<input type='text' name='post-cust' id='post-cust' value='' name='post-cust'/> <button class='ok' name='ok' onClick='okPost()'>Add</button> 
+						</div>
+						</p>
+                        <br>
+                        <p align='left'><textarea id='desc2' name='desc2'></textarea></p>
+						<br>
+                        <p align='center'>
+						<b><select id='closeing' onChange='closeTxt()' name='closeing' id='closing'>";
+						foreach ($closing as $closephrase) {
+							$closeII = "<option>".$closephrase."</option>";
+							echo $closeII;
+						}
+						echo "
+						</select>
+						<div id='close-cust-box'>
+						<input type='text' name='close-cust' id='close-cust' value='' name='close-cust' /> <button class='ok' name='ok' onClick='okClose()'>Add</button> 
+						</div></b><br>
+						<input type='text' name='user-name' id='user_name' value='".$theinfo["user_name"]."'><br>
+						<input type='text' name='phone' id='phone' value='".$theinfo["phone"]."'><br>
+						<input type='text' name='email' id='email' value='".$theinfo["email"]."'></p>
+                        </font></blockquote>
+                    </td>
+                </tr>
+            </table>
+            
+            <table width='600' bgcolor='2b2b2b'>
+                <tr>
+                    <td colspan='2'><br>&nbsp;</td>
+                </tr>
+            </table>
+            
+            <table>
+                <tr>
+                    <td><select id='logos' onChange='updatetxt()'>";
+						foreach ($footer as $logo) {
+							$logoII = "<option>".$logo."</option>";
+							echo $logoII;
+						}
+						echo "
+                        
+						</select>
+						<input type='hidden' name='logosrc' id='logosrc' value=' '>
+							<div><center><br><small><i>Another luxury home from</i><br><br>
+							<div id='logobox'></div>
+							
+						
+                    </td>
+                </tr>
+            </table>
+		</center></font>
+		<input type='submit' value='update'>
+		</form>
+	</div>
+";
+if(!empty($_POST)) {
+	
+	stripslashes($str);
+	
+	$buildingname = strtoupper($_POST['buildingname']);
+	$thebuildingname = stripslashes($buildingname);
+	$name = explode("@", $_POST['email']);
+	$myname = stripslashes($name[0]);
+	$domain = stripslashes($name[1]);
+	$Xline1 = stripslashes($_POST['line1']);
+	$Xdesc = stripslashes($_POST['description']);
+	$Xline2 = stripslashes($_POST['line2']);
+	$Xavailability = stripslashes($_POST['availability']);
+	$Xdate = stripslashes($_POST['date']);
+	$Xpostdate = stripslashes($_POST['postdate']);
+	$Xdesc2 = stripslashes($_POST['desc2']);
+	$Xcloseing = stripslashes($_POST['closeing']);
+	$Xuser = stripslashes($_POST['user-name']);
+	$Xphone = stripslashes($_POST['phone']);
+	$Xmail = stripslashes($_POST['email']);
+
+echo "
+	<hr>
+	<div id='step2'>
+	<h2>Your post</h2>
+	<p style='float: left; display: block;'>Looks like</p>
+	<p style='float: right; display: block;'>Copy this:</p>
+	<div id='preview' style='border: 1px solid black; padding: 20px; display: block; margin: 0 auto; width: 610px; background: #CFC; float: left; clear: both'>
+		
+		<font face='Century Gothic, Arial'><center>
+			<table width='600' bgcolor='2b2b2b'>
+                <tr>
+                    <th colspan='2'><font color='4a7c99' size='3'><blockquote>
+                    	".$thebuildingname."
+                    </blockquote></font></th>
+                </tr>
+            </table>
+            
+            <table width='600' bgcolor='d1d3d4'>
+                <tr>
+                    <td><font size='3'>";
+					if(strlen($Xline1) > 0) {
+						echo $Xline1."<br>";
+					}
+					if(strlen($Xdesc) > 0) {
+						echo $Xdesc;
+					}
+					if(strlen($Xline2) > 0) {
+						echo "<br>".$Xline2;
+					}	
+					echo "
+                    </td>
+                    <td>
+                        <blockquote><font size='2'>
+							<p align='center'><b>";
+								if(strlen($Xavailability) > 0) {
+									echo $Xavailability." ";
+								}
+								if(strlen($Xdate) > 0) {
+									echo $Xdate;
+								}
+								echo "</b><br>";
+								if(strlen($Xpostdate) > 0) {
+									echo $Xpostdate;
+								}
+							echo "
+							</p>";
+								
+							if(strlen($Xdesc2) > 0) {
+								echo "<p align='left'>".$Xdesc2."</p>";
+							}
+							
+							echo "
+							<p align='center'>";
+								if(strlen($Xcloseing) > 0) {
+									echo "<b>".$Xcloseing."</b><br>";
+								}
+								if(strlen($Xuser) > 0) {
+									echo $Xuser."<br>";
+								}
+								if(strlen($Xphone) > 0) {
+									echo $Xphone."<br>";
+								}
+								if(strlen($Xmail) > 0) {
+									echo $myname."@".$domain;
+								}
+								echo "
+							</p>
+                        </font></blockquote>
+                    </td>
+                </tr>
+            </table>
+            
+            <table width='600' bgcolor='2b2b2b'>
+                <tr>
+                    <td colspan='2'><br>&nbsp;</td>
+                </tr>
+            </table>
+            
+            <table>
+                <tr>
+                    <td>
+						<div><center><br><small><i>Another luxury home from</i><br><br>
+						<a href='http://domain.com'><img src='".$_POST['logosrc']."'></a>
+					</td>
+                </tr>
+            </table>
+		</center>
+	</font>
+	</div>
+	
+	<textarea id='thepost'>	<div style='border: 1px solid black; padding: 20px; display: block; margin: 0 auto; width: 610px; background: #CFC'>
+		<font face='Century Gothic, Arial'><center>
+			<table width='600' bgcolor='2b2b2b'>
+                <tr>
+                    <th colspan='2'><font color='4a7c99' size='3'><blockquote>
+                    	".$thebuildingname."
+                    </blockquote></font></th>
+                </tr>
+            </table>
+            
+            <table width='600' bgcolor='d1d3d4'>
+                <tr>
+                    <td><font size='3'>";
+					if(strlen($Xline1) > 0) {
+						echo $Xline1."<br>";
+					}
+					if(strlen($Xdesc) > 0) {
+						echo $Xdesc;
+					}
+					if(strlen($Xline2) > 0) {
+						echo "<br>".$Xline2;
+					}	
+					echo "
+                    </td>
+                    <td>
+                        <blockquote><font size='2'>
+							<p align='center'><b>";
+								if(strlen($Xavailability) > 0) {
+									echo $Xavailability." ";
+								}
+								if(strlen($Xdate) > 0) {
+									echo $Xdate;
+								}
+								echo "</b><br>";
+								if(strlen($Xpostdate) > 0) {
+									echo $Xpostdate;
+								}
+							echo "
+							</p>";
+								
+							if(strlen($Xdesc2) > 0) {
+								echo "<p align='left'>".$Xdesc2."</p>";
+							}
+							
+							echo "
+							<p align='center'>";
+								if(strlen($Xcloseing) > 0) {
+									echo "<b>".$Xcloseing."</b><br>";
+								}
+								if(strlen($Xuser) > 0) {
+									echo $Xuser."<br>";
+								}
+								if(strlen($Xphone) > 0) {
+									echo $Xphone."<br>";
+								}
+								if(strlen($Xmail) > 0) {
+									echo $myname."@".$domain;
+								}
+								echo "
+							</p>
+                        </font></blockquote>
+                    </td>
+                </tr>
+            </table>
+            
+            <table width='600' bgcolor='2b2b2b'>
+                <tr>
+                    <td colspan='2'><br>&nbsp;</td>
+                </tr>
+            </table>
+            
+            <table>
+                <tr>
+                    <td>
+						<div><center><br><small><i>Another luxury home from</i><br><br>
+						<a href='http://bostonluxe.com'><img src='".$_POST['logosrc']."'></a>
+					</td>
+                </tr>
+            </table>
+		</center>
+	</font>
+	</div></textarea>
+
+	
+</div>
+
+	
+";	
+}
+echo"
+</body>
+</html>
+";
+
+?>
+<script type="text/javascript">
+function updatetxt() {
+	var logobox = document.getElementById('logobox');
+	var logos =  document.getElementById('logos');
+	var logosrc = document.getElementById('logosrc');
+	
+	if (logos.value === "Luxe Large Logo 1") {
+		logobox.innerHTML="<img src='http://www.bostonluxe.com/images/cl-footer-long.png' />";
+		logosrc.value="http://www.bostonluxe.com/images/cl-footer-long.png"
+	}
+	else if (logos.value === "Luxe Large Logo 2") {
+		logobox.innerHTML="<img src='http://www.bostonluxe.com/images/cl-footer-semilong.png' />";
+		logosrc.value="http://www.bostonluxe.com/images/cl-footer-semilong.png"
+	}
+	else if (logos.value === "Luxe Large Logo 3") {
+		logobox.innerHTML="<img src='http://www.bostonluxe.com/images/cl-footer-short.png' />";
+		logosrc.value="http://www.bostonluxe.com/images/cl-footer-short.png"
+	}
+	else if (logos.value === "Luxe Small Logo 1") {
+		logobox.innerHTML="<img src='http://www.bostonluxe.com/images/cl-footer-avalong.png' />";
+		logosrc.value="http://www.bostonluxe.com/images/cl-footer-avalong.png"
+	}
+	else if (logos.value === "Luxe Small Logo 2") {
+		logobox.innerHTML="<img src='http://www.bostonluxe.com/images/cl-footer-avasemilong.png' />";
+		logosrc.value="http://www.bostonluxe.com/images/cl-footer-avasemilong.png"
+	}
+	else if (logos.value === "Luxe Small Logo 3") {
+		logobox.innerHTML="<img src='http://www.bostonluxe.com/images/cl-footer-avashort.png' />";
+		logosrc.value="http://www.bostonluxe.com/images/cl-footer-avashort.png"
+	};
+};
+
+window.onload =  updatetxt;
+
+function availTxt() {
+  var theavail = document.getElementById("availability");
+  if (theavail.value == "") {
+	  $( "#avail-cust-box" ).dialog({
+		  modal: true,
+		  title: "Add Custom Text",
+		  height: 90
+	  });
+  };
+};
+
+function okAvail() { 
+	var custavail = document.getElementById("avail-cust");
+	$('#availability').append('<option>'+custavail.value+'</option>');
+	$( "#avail-cust-box" ).dialog("close");
+};
+
+
+function postTxt() {
+  var thepost = document.getElementById("postdate");
+  if (thepost.value == "") {
+	$( "#post-cust-box" ).dialog({
+		  modal: true,
+		  title: "Add Custom Text",
+		  height: 90
+	  });
+  };
+};
+
+function okPost() { 
+	var custpost = document.getElementById("post-cust");
+	$('#postdate').append('<option>'+custpost.value+'</option>');
+	$('#post-cust-box' ).dialog("close");
+};
+
+
+
+function closeTxt() {
+  var theclose = document.getElementById("closeing");
+  if (theclose.value == "") {
+	$( "#close-cust-box" ).dialog({
+		  modal: true,
+		  title: "Add Custom Text",
+		  height: 90
+	  });
+  };
+};
+
+function okClose() { 
+	var custclose = document.getElementById("close-cust");
+	$('#closeing').append('<option>'+custclose.value+'</option>');
+	$( "#close-cust-box" ).dialog("close");
+}
+</script>
