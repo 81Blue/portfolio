@@ -1,0 +1,139 @@
+<?php
+require_once("models/config.php");
+if(isUserLoggedIn()) {
+	if (!$loggedInUser->checkPermission(array(1,2,3,4))){
+		header('location: account.php');
+		die();
+	}	
+}
+require_once("models/header.php");
+
+	
+	//get agent-level ids
+	$getagents = array_merge(fetchPermissionUsers('1'), fetchPermissionUsers('4'));
+	$agentid = array();
+	
+	foreach ($getagents as $id=>$userid) {
+		
+		array_push($agentid, $userid['user_id']);
+	}
+	sort($agentid,SORT_NUMERIC);
+	
+	
+	echo "<hr>";
+	$alldata = $mysqli->query("SELECT * FROM uc_users");
+	while( $row = mysqli_fetch_array($alldata) ) {
+		//target only agents
+		if (in_array($row['id'], $agentid)) {
+			$firstname = stripslashes(htmlspecialchars_decode(ucwords($row['first_name'])));
+			$fullname = stripslashes(htmlspecialchars_decode(ucwords($row['first_name'])))." ".stripslashes(htmlspecialchars_decode(ucwords($row['last_name'])));
+			$phone = stripslashes(htmlspecialchars_decode($row['Phone']));
+			$email =stripslashes(htmlspecialchars_decode( $row['email']));
+			$fax = stripslashes(htmlspecialchars_decode($row['Fax']));
+			$bio = stripslashes(htmlspecialchars_decode($row['Bio']));
+			$title = stripslashes(htmlspecialchars_decode($row['title']));
+			$google = stripslashes(htmlspecialchars_decode($row['Google']));
+			$facebook = stripslashes(htmlspecialchars_decode($row['Facebook']));
+			$linkedin = stripslashes(htmlspecialchars_decode($row['LinkedIn']));
+			$twitter = stripslashes(htmlspecialchars_decode($row['Twitter']));
+			$photo = stripslashes(htmlspecialchars_decode($row['Photo']));
+			$speedhatch = stripslashes(htmlspecialchars_decode($row['Speedhatch']));
+			
+			//check for errors
+			
+			$tidy = new tidy();
+			$tidyConfig = array('show-body-only'=>true);
+			$cleanbio = $tidy->repairString($bio, array('show-body-only'=>true));
+			
+			echo "<textarea>".$clean."</textarea>";
+			
+			$home = "../../";
+			$dir = "../agents/".strtolower($firstname);
+			echo "photo:".$photo."<br>";
+			$template = '
+			<?php include("'.$home.'includes/header.php") ?>
+			<title>'.$fullname.' | '.$title.' | Boston Luxe Real Estate</title>
+			</head>
+			
+			<body>
+			
+				<div id="wrapper">		
+					<?php include("../navg.php") ?>
+					
+					<div id="container-glass">
+						<div id="container-agents">
+							<div id="subcontainer-agents">
+								<div id="text">
+									<p class="contact-agent">
+										<a href="mailto:'.$email.'">'.$email.'</a> <span>&bull;</span> Cell: '.$phone.' <span>&bull;</span> Office: (617) 267-4600
+									</p>
+									
+									<p class="bio">
+									'.$cleanbio.'
+									</p>
+								</div>
+								
+								<div id="photo">
+									<h1>'.$fullname.'</h1>';
+									
+									if (strlen($photo) > 1) {
+										$template .= '<img src="images/'.$photo.'">';
+									}
+									
+								$template .='
+								</div>
+							</div>
+							<!-- end subcontainer -->
+						</div>
+						<!-- end agents -->
+				   
+					</div>
+					<!-- end glass -->
+				<?php include("http://www.bostonluxe.com/includes/footer.php"); ?>
+				</div>
+				<!-- end wrapper -->
+			</body>
+			';
+			
+			//echo "<textarea>".$template."</textarea><br>";
+			
+			
+			
+			
+			//build page	
+			//echo "the dir ".$dir."<br>";
+			
+			if (!is_dir($dir)) {  //check for dir
+				echo "no dir<br>";
+				mkdir($dir);
+				mkdir($dir."/images");
+				
+				$file = $dir.'/index.php';
+				$handle = fopen($file, 'w');
+				
+				if(is_writeable($file)) {
+					
+					fwrite($handle, $template);
+				}
+				else {
+					echo "error 1";
+				}
+			}
+			else {
+				$file = $dir.'/index.php';
+				$handle = fopen($file, 'w');
+				if(is_writeable($file)) {
+					fwrite($handle, $template);
+					}
+				else {
+					echo "error 2";
+				}
+				
+			}
+		
+		}  // end if-agent
+		echo "<hr>";
+	}//end while
+
+
+?>
