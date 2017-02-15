@@ -1,0 +1,394 @@
+<?php
+$areas = file_get_contents('private'); //universal list of neighborhoods served
+$lead_sent = "no";
+$allareas = explode(',', $areas);
+?>
+<style>
+#leadfinder {
+	z-index: 100;
+	background: none;
+	height: 100%;
+	width: 100%;
+	position: absolute;
+	font-size: 12px;
+}
+#leadfinder #mask {
+	background: #2b2b2b;
+	opacity: .5;
+	height: 100%;
+	width: 100%;
+	position: absolute;
+	top:0;
+	left: 0;
+}
+#leadfinder #contact {
+	opacity: 1;
+	background: white;
+	position: absolute;
+	width: 500px;
+	left: 50%;
+	margin-left: -250px;
+	top: 5%;
+	padding: 20px;
+	-webkit-border-radius: 20px;
+	-moz-border-radius: 20px;
+	border-radius: 20px;
+	-webkit-box-shadow: 10px 10px 14px 4px rgba(0,0,0,0.48);
+	-moz-box-shadow: 10px 10px 14px 4px rgba(0,0,0,0.48);
+	box-shadow: 10px 10px 14px 4px rgba(0,0,0,0.48);
+}
+#leadfinder #closebtn {
+	background: url('http://bostonluxe.com/images/icon_close-on.jpg') no-repeat;
+	background-size: 15px auto;
+	height: 15px;
+	width: 15px;
+	float: right;
+	margin-right: 15px;
+	cursor: pointer;
+}
+#leadfinder #closebtn:hover {
+	background: url('http://bostonluxe.com/images/icon_close.jpg') no-repeat;
+	background-size: 15px auto;
+}
+#leadfinder #header {
+	background-color: #4a7c99;
+	left: -21px;
+    margin: 0 0 -15px 0;
+    padding: 10px;
+    position: relative;
+    top: -21px;
+	height: 15px;
+    width: 521px;
+	-webkit-border-top-left-radius: 20px;
+	-webkit-border-top-right-radius: 20px;
+	-moz-border-radius-topleft: 20px;
+	-moz-border-radius-topright: 20px;
+	border-top-left-radius: 20px;
+	border-top-right-radius: 20px;
+	text-align: right;
+	color: white;
+}
+#leadfinder #contact label {
+	display: inline-block;}
+#leadfinder #contact label.radio, #leadfinder #contact label.check {
+	display: inline;}
+
+#leadfinder label#sizelabel, #leadfinder label#costlabel {
+	display: inline-table;
+	text-align: middle;}
+	
+#leadfinder #thesizeamount, #leadfinder #thecostamount {
+	display: inline;
+	width: auto;
+	border: none;
+	color: #4a7c99;
+	background: none
+	}
+#leadfinder #costrange, #leadfinder #sizerange {
+	font-size: 12px;
+	margin: 0px 0 10px;}
+		
+#leadfinder #contact p {
+	font-size: 14px;
+	line-height: 24px;
+}
+
+#leadfinder table {
+	font-siz: 12px;
+	width: 100%;}
+#leadfinder label {
+	font-size: 12px;
+}
+#leadfinder .req {
+	color: #4a7c99;
+	margin-left: 3px;
+	font-weight: bold;}
+	
+#leadfinder table input[type='text'] {
+	width: 100%;
+	background: #D2EAF9;
+	border-width: 0 0 1px 0;
+	border-bottom: 1px solid #2b2b2b;
+	margin-bottom: 5px;}
+
+#leadfinder #submit-contact {
+	background: url('http://bostonluxe.com/images/button_submit.gif') no-repeat;
+	width: 75px;
+	height: 30px;
+	float: right;
+	margin: 10px 0;
+	cursor: pointer;
+	border: none;}
+#leadfinder #submit-contact:hover {
+	background: url('http://bostonluxe.com/images/button_submit-on.gif') no-repeat;}
+#leadfinder table td {width: 50%; padding: 0 10px;}
+
+#leadfinder #optl-toggle {
+	background: #4a7c99;
+	color: white;
+	font-weight: bold;
+	padding: 0px 7px;
+	font-size: 10px;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	-webkit-border-radius: 20px;
+	-moz-border-radius: 20px;
+	border-radius: 20px;
+	margin-top: 5px;
+	cursor: pointer;
+	float: right;
+}
+
+.errors {
+	border: 1px solid #33466a !important;}
+#errorbox {
+	display: none;
+	background: #D2EAF9;
+	border: 1px solid #4a7c99;
+	color: #4a7c99;
+	padding: 5px 10px;
+	width: 80%;
+	margin: 0 auto;
+}
+#errorbox ul, li {list-style: none; margin: 0; padding: 0;}
+
+#form-optl {
+	display: none;}
+
+#returns {
+	display: none;
+	width: 90%;
+	margin: 0 auto;
+	padding: 15px;
+	border: 0px solid #4a7c99;
+	background: white;
+	font-size: 14px;
+	font-weight: bold;
+	text-align: center}
+#returns ul, #returns li {
+	margin: 0;
+	padding: 0;}
+#leadfinder table input[type="text"]#thecostmin, #leadfinder table input[type="text"]#thecostmax {
+	width: 35%;
+	display: inline-block;
+	text-align: center;
+	margin: 0 auto;
+}	
+#leadfinder table input[type="text"]#thesizemin, #leadfinder table input[type="text"]#thesizemax {
+	width: 35%;
+	display: inline-block;
+	text-align: center;
+	margin: 0 auto;
+}	
+</style>
+<script type="text/javascript">
+$(function() {
+	
+  $('#leadfinder').hide();
+  $('#leadfinder').delay(5).slideDown(200, 'easeInBack', function(){
+	  $('#leadfinder').fadeIn('fast');
+  });  	
+  function commaSeparateNumber(val){
+		while (/(\d+)(\d{3})/.test(val.toString())){
+			val = val.toString().replace(/(\d+)(\d{3})/, '$1'+','+'$2');
+		}
+		return val;
+  }
+  
+  $( "#sizerange" ).slider({
+		  range: true,
+		  min: 0,
+		  max: 10,
+		  step: 1,
+		  values: [ 1, 3 ],
+		  slide: function( event, ui ) {
+			  var newmin =ui.values[ 0 ];
+			  var newmax =ui.values[ 10000 ];
+			  $('#thesizemin').val(newmin);
+			  $('#thesizemax').val(newmax);
+			  $("#thesizeamount" ).val(commaSeparateNumber(ui.values[ 0 ]) + " - " + commaSeparateNumber(ui.values[ 1 ]) );
+		  }
+	  });
+  $( "#thesizeamount" ).val($( "#sizerange" ).slider( "values", 0 ) + " - " + $( "#sizerange" ).slider( "values", 1 ) );
+});
+
+//toggle optional fields
+$(function optionalToggle() {
+	$('#optl-toggle').click(function(){		
+		if ( $('#optl-toggle').hasClass('show') ){
+			$('#form-optl').show();
+			$('#optl-toggle.show').html('hide');
+			$('#optl-toggle.show').addClass('hide');
+			$('#optl-toggle.show').removeClass('show');
+			$('#optl').val('yes');
+		}
+		else if ($('#optl-toggle').hasClass('hide')) {
+			$('#form-optl').hide();
+			$('#optl-toggle.hide').html('show');
+			$('#optl-toggle.hide').addClass('show');
+			$('#optl-toggle.hide').removeClass('hide');
+			$('#optl').val('no');
+		}
+	});
+});
+
+//e.keyCode == 27
+$(function closeit(){
+	$('#closebtn').on('click', function(){
+		$('#contact').slideUp(200, 'easeInBack', function(){
+			$('#leadfinder').fadeOut('fast');
+		});
+		
+	});
+});
+$(document).keypress(function(e){
+	if (e.keyCode == 27) {
+		$('#contact').slideUp(200, 'easeInBack', function(){
+			$('#leadfinder').fadeOut('fast');
+		});
+	}
+});
+$(function validate(){
+	$('#lead-form').submit(function(e){
+		e.preventDefault();
+		var errors = [];
+		if ( $('#firstname').val().length < 1 ) {
+			$('#firstname').addClass('errors');
+			errors.push('Please provide a first name.');
+		}
+		
+		if ( $('#lastname').val().length < 1 ) {
+			$('#lastname').addClass('errors');
+			errors.push('Please provide a last name.');
+		}
+		
+		if ( $('#phone').val().length < 1 ) {
+			$('#phone').addClass('errors');
+			errors.push('Please provide a phone number.');
+		}
+		
+		if ( $('#email').val().length < 1 ) {
+			$('#email').addClass('errors');
+			errors.push('Please provide an email address.');
+		}
+		
+		//pass to php processor.  if opt'l = no, exclude from message.
+		//php validate backup
+		//check for fields with src/href
+		//simple style mail message
+		//send to leads@
+		
+		if (errors.length) { //if errors found
+			$('#errorbox').show();
+			$('#errorbox').append('<ul>');
+			$.each(errors, function(key, error) { //display errors
+				$('#errorbox').append('<li>'+error+'</li>');
+			});
+			$('#errorbox').append('</ul>');
+		}
+		else {
+			$.post( "mainleadhandler.php", $('#lead-form').serialize() )
+				.done(function( data ) {
+				$('#leadfinder #returns').html(data);
+				$('#returns').show();
+				if(data.indexOf('Sorry,') <= 0){
+					$('#leadfinder form').hide();
+					$('#contact').delay(3000).slideUp(200, 'easeInBack', function(){
+						$('#leadfinder').fadeOut('fast');
+					});
+				};
+			});
+		}
+		
+	});
+	
+	
+});
+$(function() {
+	$('#saletype').change(function(){
+		if ($('#saletype').val() == 'Buy') {
+			$('#thecostmin').val('300,000');
+			$('#thecostmax').val('500,000');
+		}
+		if ($('#saletype').val() == 'Rent') {
+			$('#thecostmin').val('1,000');
+			$('#thecostmax').val('4,000');
+		}
+	});
+	
+	$('#thecostmin,#thecostmax').keyup(function(){
+		$('#costamount').val($('#thecostmin').val()+' - '+$('#thecostmax').val());
+	});
+});
+</script>
+
+<div id='leadfinder'>
+	<section id='mask'></section>
+        <section id='contact'>
+            <section id='header'>
+            	<div id='closebtn'></div>
+            </section>
+			<section id='content'>
+            <div id='returns'></div>
+            <form id='lead-form'>
+            	<p>Thanks for your interest in Boston Luxe!  We'd love to help find YOUR new home!  Just fill out this form and one of our agents will be in touch soon!</p>
+            <div id='errorbox'></div>
+            	<table border="0">
+                  <tr>
+                    <td><label for='name'>First Name<span class='req'>*</span></label>
+                	    <input type='text' name='firstname' id='firstname'></td>
+                    <td><label for='name'>Last Name<span class='req'>*</span></label>
+                	    <input type='text' name='lastname' id='lastname'></td>
+                  </tr>
+                  <tr>
+                  	<td><label for='name'>Phone Number<span class='req'>*</span></label>
+                		<input type='text' name='phone' id='phone'></td>
+                    <td><label for='name'>Email Address<span class='req'>*</span></label>
+                		<input type='text' name='email' id='email'></td>
+                  </tr>
+                </table>
+            
+                <p>Would you like to add some optional details?  This will help us match you with the perfect agent for your needs.
+                   <span id='optl-toggle' class='show'>Show</span></p>
+                   <input type='hidden' id='optl' name='optl' value='no' />
+                <table id='form-optl' border='0'>
+                  <tr>
+                  	<td><label for='saletype'>I want to </label> <select id='saletype' name='saletype'>
+                    		<option>Rent</option>
+                            <option>Buy</option>
+                        </select>
+                    <td><label for='name'>In the</label>
+                        <select id='area' name='area'><br />
+                            <?php foreach ($allareas as $area) {
+                                echo '<option>'.$area.'</option>';
+                            }?>
+                        </select></td>
+                    
+                  </tr>
+                  <tr>
+                  	<td><label for="sizeamount" id='sizelabel'>Bedrooms:</label><br />
+                    	<input type='text' id='thesizemin' name='size-min' class='mini' value='1' /> -
+                        <input type='text' id='thesizemax' name='size-max' class='mini' value='3' /> 
+                    </td>
+                    <td>
+                        <label for="costamount" id='thecostlabel'>Price Range:</label><br />
+                    	<input type='text' id='thecostmin' name='cost-min' value='1,000' /> - 
+                        <input type='text' id='thecostmax' name='cost-max' value='4,000' />
+                        <input type='hidden' id='costamount' value='' /> 
+                        
+                  </tr>
+                  <tr>
+                    <td><label for='name'>Any Pets?</label><br />
+                        <input type='checkbox' id='pets-cat' name='pets-cat' value='dog'> <label for='pets-cat' class='check'>Cats</label>
+                        <input type='checkbox' id='pets-dog' name='pets-dog' value='cat'> <label for='pets-dog' class='check'>Dogs</label></td>
+                    <td><label for='name'>Need Parking?</label><br />
+                        <input type='radio' name='parking' id='parking' value='yes'><label for='park-yes' class='radio'>Yes</label>
+                        <input type='radio' name='parking' id='parking' value='no'><label for='park-no' class='radio'>No</label></td>
+                  </tr>
+                  
+                </table>
+                <button id='submit-contact' name='submit-contact'></button>
+           	</form>
+			</section>
+        </section>
+</div>
