@@ -1,0 +1,270 @@
+	<?php
+
+
+//Sortable tables
+$sort = ($_GET['sort']);
+$sortBy = $sort;
+
+$alldata = $luxemysqli->query("SELECT * FROM BuildList ORDER BY " .$sortBy);
+echo "
+<style>
+input[type='submit']{
+	font-family: 'Conv_bl_gothic',Century Gothic;
+    font-size: 12px;
+	background: none repeat scroll 0 0 #2B2B2B;
+    border: 3px solid #4A7C99;
+    color: white;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    padding: 3px 5px;
+    text-transform: uppercase;}
+a.toggle, a:visited.toggle {display: inline !important; cursor: pointer}
+</style>
+";
+
+echo "
+
+<section id='manager'>
+	<div id='newpost-confirm' title='Please Confirm:'>
+		<form method='post' action='luxelist-postmanager.php' id='newpostform'>
+			<label for='title'>Post Title:</label> <input type='text' value='' name='title' id='posttitle'><br>
+			<label for='Neighborhood'>Neighborhood: </label>
+				<select id='postarea' name='Neighborhood'>";
+					//Matchess first area if default is more than one area
+					$neighborhoods = file_get_contents('models/neighborhood-list.php');
+					$current = $row['Neighborhood'];
+					$shortened = substr($current, 0, 8);
+					$areas = explode(',', $neighborhoods);
+					foreach ($areas as $area) {
+						$test = stripos($area, $shortened);
+						if ($test !== FALSE) {
+							echo '<option name='.$area.' selected="selected">'.$area.'</option>';
+						}
+						else {
+							echo '<option name='.$area.'>'.$area.'</option>';
+						}
+					}	
+					
+					
+					echo '<option>'.$current.'</option>';
+				echo "
+				</select><br>
+			<label for='comments-on'>Allow Comments:</label> 
+				<input type='radio' name='allowcomments' value='no' checked='checked'>No. 
+				<input type='radio' name='allowcomments' value='yes'>Yes.  <br>
+			<label for='tags'>Tags: </label><input type='text' name='tags' id='tags'>
+			<input type='hidden' name='tags2' id='tags2' value=''>
+			<input type='hidden' name='theid' id='theid' value=''><br>
+			<br>
+			<input type='submit' name='sendpost' value='Build Post' id='sendpost'>
+		</form>
+	</div>
+
+
+	<form method='post' action='editwrap.php' name='editpost' id='editpost'>
+	<div class='buttons'>
+		Go to list: 
+		<select id='listtype'>
+			<option value='Available' selected='selected'>Available</option>
+			<option value='Rented'>Rented</option>
+			<option value='Construction'>Construction</option>
+			<option value='Blacklisted'>Blacklisted</option>
+		</select>
+
+		<input type='submit' value='Edit Checked Rows'>
+		|
+		<a id='add-row'>Add Row</a>
+		
+		
+		
+		
+		<!--<a class='button' id='findposts' href='luxelist-postmanager.php'>Run Post Finder</a>-->
+	</div>
+	<div id='table-wrap'>
+		<table cellpadding='0' cellspacing='0' border='0' id='manager-table'>
+		<tr id='tableheader'>
+			<td id='editrow'>Edit?<br>[<a id='toggle-all' class='toggle'>All</a> | <a class='toggle' id='toggle-none'>None</a>]</td>
+			<td id='idrow'><a href='?sort=ID'>#</a></td>
+			<td id='buildname'><a href='?sort=BuildingName'>Building Name</a></td>
+			<td id='buildaddress'><a href='?sort=Address'>Address</a></td>
+			<td id='area'><a href='?sort=Neighborhood'>Neighborhood</a></td>
+			<td id='status'><a href='?sort=Status'>Status</a></td>
+			<td id='wplinks'><a href='?sort=wp_links'>WP Links</td>
+			<td id='landlord'><a href='?sort=landlord-name'></a>Landlord</td>
+			<td id='pets'><a href='?sort=pets-cat'></a>Pets</td>
+			<td id='hours'><a href='?sort=hours'></a>Hours</td>
+			<td id='rent'> <a href='?sort=rent'></a>Rent</td>
+			<td id='desc'><a href='?sort=description'></a>Description</td>
+			<td id='amenities'><a href='?sort=amenities'></a>Amenities</td>
+			<td id='page'><a href='?sort=pagestatus'></a>Page</td>
+			<td id='listings'><a href='?sort=listings'></a>Listings</td>
+			<td id='latlong'><a href='?sort=latlong'></a>Map Coords</td>
+		</tr>
+		";
+	
+	while( $row = mysqli_fetch_array($alldata) ) {
+		$thisrow = array();
+		//save for later: name='row-".$row['id']."' id='row-".$row['id']."' value='id = ".$row['id'].", name = ".$row['BuildingName'].", address = ".$row['Address'].", area = ".$row['Neighborhood'].", status = ".$row['Status'].", ucdraft = ".$row['wp_ucdraft'].", ccdraft = ".$row['wp_ccdraft'].", ucpub = ".$row['wp_ucpub'].", ccpub = ".$row['wp_ccpub']."'
+		if ($row['Blacklist'] !== "Blacklisted"){
+		
+		echo "
+		
+		<tr id='therow".$row['id']."'>
+			<td id='row".$row['id']."'><input type='checkbox' id='edit".$row['id']."' class='editthisrow' name='edit-".$row['id']."' value='".$row['id']."'></td>
+			<td>".$row['id']."</td>
+			<td>".$row['BuildingName']."</td>
+			<td>".$row['Address']."</td>
+			<td>".$row['Neighborhood']."</td>
+			<td>".$row['Status']."</td>
+			<td>";
+			
+			//get & display links
+			if (strlen($row['links']) > 0) {
+				$allLinks = $row['links'];
+				$theLinks = explode("^^", $allLinks);
+				foreach($theLinks as $aLink) {
+					$postkeys = array("status", "title", "link");
+					$linkGuts = explode("``", $aLink);
+					
+					if (count($linkGuts) < 3) {
+						unset($linkGuts);
+					}
+					else {
+						$pStatus = $linkGuts[0];
+						$pTitle = $linkGuts[1];	
+						$pLink = $linkGuts[2];
+						
+						echo "<a href='".$linkGuts[2]."'><b>[".$linkGuts[0]."]</b> ".$linkGuts[1]."</a>";
+						echo "<br>";
+					}
+				}
+				
+			}
+			;
+			// if status = complete || under construction, show 'make post' button.
+			if ($row['Status'] == "Construction Complete" || $row['Status'] == "Under Construction" ) {
+				//echo "<div class='sml_button newpost' name='newpost' id='".$row['id'].":".$row['BuildingName']."'>Create New Post</div>";
+				}
+	echo "  </td>
+			<td>".$row['landlord_name']."<br>".$row['landlord_phone']."</td>
+			
+			<td>Cats: ".$row['pets_cat']."<br>Fees: ".$row['cat_fee']."<br>Dogs: ".$row['pets_dog']."<br>Fees: ".$row['dog_fee']."</td>
+			
+			<td>Mon: ".$row['hours_mon']."<br>
+				Tues: ".$row['hours_tues']."<br>
+				Weds: ".$row['hours_weds']."<br>
+				Thurs: ".$row['hours_thurs']."<br>
+				Fri: ".$row['hours_fri']."<br>
+				Sat: ".$row['hours_sat']."<br>
+				Sun: ".$row['hours_sun']."<br></td>
+			
+			<td>Studio: ".$row['rent_s']."<br>
+				1br: ".$row['rent_1br']."<br>
+				2br: ".$row['rent_2br']."<br>
+				3+br: ".$row['rent_3br']."<br></td>
+			
+			<td>".$row['description']."</td>
+			
+			<td>".$row['amenities']."</td>
+			
+			<td>";
+			
+				if (strlen($row['page']) > 1) {
+					echo "
+					<a href='".$row['page']."'>Go To Page</a><br>
+					";
+				}
+				else {
+					//echo "<a class='sml_button'>Build Page</a><br>";
+				}
+				echo "
+				Visibile: ".$row['pagestatus']."<br>
+				Rent: ".$row['typerent']."  Sale: ".$row['typesale']."
+			</td>
+			<td>".$row['latlong']."</td>
+			<td>".$row['listings']."</td>
+			
+		</tr>";
+		}
+		//end if
+		else {
+			//do squat
+		}
+	}
+	//end while
+	echo "
+	</table>
+	</div>
+	
+<br>
+</form>
+";
+
+
+echo"
+<div id='dialog-form' title='Add A Building'>
+	<form method='post' action='add-row.php'>
+	<table>
+		<tr>
+			<td><input type='text' name='buildingname' value='Building Name'></td>
+			<td><input type='text' name='address' value='address'></td>
+			<td><select name='neighborhood'>";
+							
+							$neighborhoods = file_get_contents('models/neighborhood-list.php');
+							$areas = explode(',', $neighborhoods);
+							foreach ($areas as $area) {
+								echo '<option name='.$area.'>'.$area.'</option>';
+							}	
+							
+						echo "
+						</select></td>
+			<td><input type='text' name='status' value='status'></td>
+			<td><input type='submit' value='Add Row'></td>
+	</table>
+	</form>
+</div>
+
+<div id='editbox' title='Edit Information'>
+	<form method='post' action=''>
+	<div id='currentid'></div>".$row['BuildingName']."
+	</form>
+</div>
+
+</section>
+
+<script type='text/javascript'>
+$(function newpost() {
+	$('.newpost').click(function() {
+		var blurb = $(this).attr('id')
+		var data = blurb.split(':');
+		
+		var newtitle = data[1];
+		var bldid = data[0];
+		
+		$('#posttitle').val(newtitle);
+		$('#tags2').val(newtitle);
+		$('#theid').val(bldid);
+		
+		$( '#newpost-confirm' ).dialog({
+			height: 'auto',
+			modal: true
+		});
+	});		
+});
+
+$(function togglebox() {
+	$('#toggle-all').click(function() {
+		$('.editbox').prop('checked', true)
+	});
+	$('#toggle-none').click(function() {
+		$('.editbox').prop('checked', false)
+	});
+});
+
+
+</script>
+
+";
+?>
